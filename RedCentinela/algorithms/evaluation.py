@@ -41,7 +41,6 @@ def evaluation_function(state: GameState) -> float:
     intruso = state.intruder_position
     pendientes = state.pending_terminals
 
-    # Busca la distancia a la terminal pendiente más cercana.
     distancia_objetivo = float("inf")
 
     for terminal in pendientes:
@@ -55,7 +54,6 @@ def evaluation_function(state: GameState) -> float:
     elif distancia_objetivo == float("inf"):
         distancia_objetivo = state.layout.width * state.layout.height
 
-    # Calcula el peligro por cercanía del intruso.
     distancia_intruso = state.layout.distance(defensor, intruso)
 
     if distancia_intruso == float("inf"):
