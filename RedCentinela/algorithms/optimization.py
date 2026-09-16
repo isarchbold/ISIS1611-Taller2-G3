@@ -13,10 +13,11 @@ def configuration_score(
 
     Tips:
     - Use problem.score_components(configuration); ya retorna cobertura,
-      redundancia y exposición en ese orden.
+    redundancia y exposición en ese orden.
     """
-    # TODO: Add your code here
-    raise NotImplementedError("Punto 1: implemente configuration_score")
+    coverage, redundancy, exposure = problem.score_components(configuration)
+
+    return coverage - redundancy - exposure
 
 
 def hill_climbing(
@@ -33,13 +34,53 @@ def hill_climbing(
 
     Tips:
     - problem.neighbors(current) retorna vecinos válidos en el orden que debe
-      usarse para desempatar.
+    usarse para desempatar.
     - Cada llamada a configuration_score(...) cuenta como una evaluación.
     - Inicialice los historiales con la configuración inicial y agregue solo las
-      mejoras aceptadas antes de retornar el OptimizationResult.
+    mejoras aceptadas antes de retornar el OptimizationResult.
     """
-    # TODO: Add your code here
-    raise NotImplementedError("Punto 1: implemente hill_climbing")
+
+    current = initial_configuration
+    evaluations = 0
+    iterations = 0
+    
+    current_score = configuration_score(problem, current)
+    evaluations += 1
+        
+    history_configurations = [current]
+    history_scores = [current_score]
+    
+    while iterations < max_iterations:
+        best_neighbor = None
+        best_score = current_score
+        
+        for neighbor in problem.neighbors(current):
+            neighbor_score = configuration_score(problem, neighbor)
+            evaluations += 1
+            
+            if neighbor_score > best_score:
+                best_neighbor = neighbor
+                best_score = neighbor_score
+        
+        if best_neighbor is None:
+            break 
+        
+        current = best_neighbor
+        current_score = best_score
+        history_configurations.append(current)
+        history_scores.append(current_score)
+        
+        iterations += 1
+        
+
+    return OptimizationResult(
+        best_configuration=current,
+        best_score=current_score,
+        evaluations=evaluations,
+        iterations=iterations,
+        history=history_configurations,
+        score_history=history_scores
+    )
 
 
 def cooling_schedule(initial_temperature: float, cooling_rate: float, iteration: int) -> float:
