@@ -37,6 +37,37 @@ def evaluation_function(state: GameState) -> float:
     """
     if state.is_win() or state.is_lose():
         return base_evaluation_function(state)
+    defensor = state.defender_position
+    intruso = state.intruder_position
+    pendientes = state.pending_terminals
 
-    # TODO: Add your code here
-    return base_evaluation_function(state)
+    # Busca la distancia a la terminal pendiente más cercana.
+    distancia_objetivo = float("inf")
+
+    for terminal in pendientes:
+        distancia = state.layout.distance(defensor, terminal)
+
+        if distancia < distancia_objetivo:
+            distancia_objetivo = distancia
+
+    if not pendientes:
+        distancia_objetivo = 0
+    elif distancia_objetivo == float("inf"):
+        distancia_objetivo = state.layout.width * state.layout.height
+
+    # Calcula el peligro por cercanía del intruso.
+    distancia_intruso = state.layout.distance(defensor, intruso)
+
+    if distancia_intruso == float("inf"):
+        riesgo = 0
+    else:
+        riesgo = 120 / (distancia_intruso + 1)
+
+    valor = (
+        state.get_score()
+        - 80 * len(pendientes)
+        - 10 * distancia_objetivo
+        - riesgo
+    )
+
+    return max(-999.0, min(999.0, valor))
