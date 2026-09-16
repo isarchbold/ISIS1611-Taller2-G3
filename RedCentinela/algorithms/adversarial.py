@@ -41,7 +41,74 @@ class MinimaxAgent(MultiAgentSearchAgent):
           la raíz. Retorne la acción de MAX y conserve la primera en los empates.
         """
         # TODO: Add your code here
-        raise NotImplementedError("Punto 4: implemente MinimaxAgent.get_action")
+        self.nodes_evaluated = 0
+        def minimax_value(
+            current_state: GameState,
+            agent_index: int,
+            current_depth: int,
+        ) -> float:
+            self.nodes_evaluated += 1
+            if (
+                current_state.is_win()
+                or current_state.is_lose()
+                or current_depth >= self.depth
+            ):
+                return evaluation_function(current_state)
+
+            legal_actions = current_state.get_legal_actions(agent_index)
+            if not legal_actions:
+                return evaluation_function(current_state)
+
+            next_agent = (
+                agent_index + 1
+            ) % current_state.get_num_agents()
+            if agent_index == 0:
+                best_value = float("-inf")
+                for action in legal_actions:
+                    successor = current_state.generate_successor(
+                        agent_index, action
+                    )
+                    value = minimax_value(
+                        successor,
+                        next_agent,
+                        current_depth + 1,
+                    )
+                    best_value = max(best_value, value)
+
+                return best_value
+            
+            best_value = float("inf")
+            for action in legal_actions:
+                successor = current_state.generate_successor(
+                    agent_index, action
+                )
+                value = minimax_value(
+                    successor,
+                    next_agent,
+                    current_depth + 1,
+                )
+                best_value = min(best_value, value)
+            return best_value
+
+        self.nodes_evaluated += 1
+        if state.is_win() or state.is_lose():
+            return None
+
+        legal_actions = state.get_legal_actions(0)
+        if not legal_actions:
+            return None
+
+        best_action = legal_actions[0]
+        best_value = float("-inf")
+        next_agent = 1 % state.get_num_agents()
+        for action in legal_actions:
+            successor = state.generate_successor(0, action)
+            value = minimax_value(successor, next_agent, 1)
+            if value > best_value:
+                best_value = value
+                best_action = action
+
+        return best_action
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
