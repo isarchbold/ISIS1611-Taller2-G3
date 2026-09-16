@@ -62,4 +62,66 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           y corte si valor <= alpha.
         """
         # TODO: Add your code here
-        raise NotImplementedError("Punto 5: implemente AlphaBetaAgent.get_action")
+        self.nodes_evaluated = 0
+
+        def buscar(estado, agente, profundidad, alfa, beta):
+            self.nodes_evaluated += 1
+
+            if (estado.is_win() or estado.is_lose() or profundidad == 0):
+                
+                return evaluation_function(estado), None
+
+            acciones = estado.get_legal_actions(agente)
+
+            if not acciones:
+                return evaluation_function(estado), None
+
+            siguiente = (agente + 1) % estado.get_num_agents()
+            mejor_accion = acciones[0]
+
+            if agente == 0:
+                mejor_valor = float("-inf")
+
+                for accion in acciones:
+                    nuevo_estado = estado.generate_successor(agente, accion)
+
+                    valor, _ = buscar(
+                        nuevo_estado,
+                        siguiente,
+                        profundidad - 1,
+                        alfa,
+                        beta,
+                    )
+
+                    if valor > mejor_valor:
+                        mejor_valor = valor
+                        mejor_accion = accion
+
+                    alfa = max(alfa, mejor_valor)
+
+                    if mejor_valor >= beta:
+                        break
+
+            else:
+                mejor_valor = float("inf")
+
+                for accion in acciones:
+                    nuevo_estado = estado.generate_successor(agente, accion)
+
+                    valor, _ = buscar(nuevo_estado, siguiente, profundidad - 1, alfa, beta)
+
+                    if valor < mejor_valor:
+                        mejor_valor = valor
+                        mejor_accion = accion
+
+                    beta = min(beta, mejor_valor)
+
+                    if mejor_valor <= alfa:
+                        break
+
+            return mejor_valor, mejor_accion
+
+        _, mejor_accion = buscar(state, 0, self.depth, float("-inf"), float("inf"))
+
+        return mejor_accion
+
