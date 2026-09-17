@@ -137,13 +137,19 @@ def one_point_crossover(
     - Cada descendiente combina el prefijo de un padre con el sufijo del otro.
     - Retorne tuplas y no repare aquí los descendientes.
     """
+
+    
     if len(parent1) != len(parent2):
         raise ValueError("Los padres deben tener la misma longitud")
     if len(parent1) < 2:
         return parent1, parent2
+    #Usamos el pseudocodigo que sale en Notas de Clase IA (el libro)
+    n= len(parent1)
+    c= rng.randint(1, n-1) #rng usado para dar un numero aleatorio entero.
+    child1 = parent1[:c] + parent2[c:]
+    child2 = parent2[:c] + parent1[c:]
 
-    # TODO: Add your code here
-    raise NotImplementedError("Punto 3: implemente one_point_crossover")
+    return child1, child2
 
 
 def swap_mutation(
@@ -162,8 +168,29 @@ def swap_mutation(
     - Si alguno de los dos grupos está vacío, no hay un intercambio posible.
     - Retorne una tupla nueva; no modifique el individuo recibido.
     """
-    # TODO: Add your code here
-    raise NotImplementedError("Punto 3: implemente swap_mutation")
+    #Pseudocodigo de Notas de Clase IA pero solo aparece mutacion por inversion de bit y remplazo aleatorio de gen
+    #aca es por intercambio entonces toca hacerle un retoque.
+    if rng.random() < mutation_probability: #Caso donde toca mutar
+        indices_unos= []
+        indices_ceros= []
+        for i, bit in enumerate(individual):
+            if bit == 1:
+                indices_unos.append(i)
+            else:
+                indices_ceros.append(i)
+
+        if len(indices_unos) == 0 or len(indices_ceros) == 0:
+            return individual #Caso 2 no hay intercambio.
+
+        cromosoma= list(individual)
+        i = rng.choice(indices_unos)
+        j = rng.choice(indices_ceros)
+        cromosoma[i]=0
+        cromosoma[j]=1
+        return tuple(cromosoma)
+    else:
+        return individual #Caso 3 no toca mutar.
+   
 
 
 def genetic_algorithm(
@@ -199,5 +226,58 @@ def genetic_algorithm(
     if not 0 <= elite_size <= population_size:
         raise ValueError("elite_size debe estar entre 0 y population_size")
 
-    # TODO: Add your code here
-    raise NotImplementedError("Punto 3: implemente genetic_algorithm")
+    poblacion = problem.initial_population(population_size, rng)
+    scores = [configuration_score(problem, config) for config in poblacion]
+    evaluations = len(poblacion)
+
+    mejor_indice = scores.index(max(scores))
+    mejor_global = poblacion[mejor_indice]
+    mejor_global_score = scores[mejor_indice]
+
+    history_configurations = [mejor_global]
+    history_scores = [mejor_global_score]
+
+    for gen in range(generations):
+        ranked = sorted(zip(poblacion, scores), key=lambda item: item[1], reverse=True)
+        nueva_poblacion = []
+        for config, score in ranked[:elite_size]:
+            nueva_poblacion.append(config) #Igual que con swap mutation.
+
+        while len(nueva_poblacion) < population_size:
+            padre1 = problem.tournament_select(poblacion, scores, rng)
+            padre2 = problem.tournament_select(poblacion, scores, rng)
+            hijo1, hijo2 = one_point_crossover(padre1, padre2, rng)
+            hijo1 = problem.repair_configuration(hijo1, rng)
+            hijo2 = problem.repair_configuration(hijo2, rng)
+            hijo1 = swap_mutation(hijo1, mutation_probability, rng)
+            hijo2 = swap_mutation(hijo2, mutation_probability, rng)
+            nueva_poblacion.append(hijo1)
+            if len(nueva_poblacion) < population_size:
+                nueva_poblacion.append(hijo2)
+
+        poblacion = nueva_poblacion
+        scores = []
+        for config in poblacion:
+            scores.append(configuration_score(problem, config))
+        evaluations += len(poblacion)
+
+        mejor_indice = scores.index(max(scores))
+        mejor_actual = poblacion[mejor_indice]
+        mejor_actual_score = scores[mejor_indice]
+
+        if mejor_actual_score > mejor_global_score:
+            mejor_global = mejor_actual
+            mejor_global_score = mejor_actual_score
+
+        history_configurations.append(mejor_global)
+        history_scores.append(mejor_global_score)
+
+    return OptimizationResult(
+        best_configuration=mejor_global,
+        best_score=mejor_global_score,
+        evaluations=evaluations,
+        iterations=generations,
+        history=history_configurations,
+        score_history=history_scores,
+    )
+    
