@@ -86,11 +86,8 @@ def hill_climbing(
 def cooling_schedule(initial_temperature: float, cooling_rate: float, iteration: int) -> float:
     """
     Retorna el programa geométrico T(t) = T0 * alpha**t.
-
-    Esta función se invoca desde simulated_annealing en cada iteración.
     """
-    # TODO: Add your code here
-    raise NotImplementedError("Punto 2: implemente cooling_schedule")
+    return initial_temperature * (cooling_rate ** iteration)
 
 
 def simulated_annealing(
@@ -119,9 +116,54 @@ def simulated_annealing(
     """
     rng = rng or random.Random()
     minimum_temperature = 1e-9
+    current = initial_configuration
+    current_score = configuration_score(problem, current)
+    evaluations = 1
 
-    # TODO: Add your code here
-    raise NotImplementedError("Punto 2: implemente simulated_annealing")
+    best_configuration = current
+    best_score = current_score
+
+    history = [current]
+    score_history = [current_score]
+
+    temperature = initial_temperature
+    iteration = 0
+
+    while iteration < max_iterations:
+        temperature = cooling_schedule(initial_temperature, cooling_rate, iteration)
+        if temperature <= minimum_temperature:
+            break
+
+        candidate = rng.choice(problem.neighbors(current))
+        candidate_score = configuration_score(problem, candidate)
+        evaluations += 1
+
+        delta = candidate_score - current_score
+        if delta > 0 or rng.random() < math.exp(delta / temperature):
+            current = candidate
+            current_score = candidate_score
+            if current_score > best_score:
+                best_configuration = current
+                best_score = current_score
+
+        history.append(current)
+        score_history.append(current_score)
+
+        iteration += 1
+
+    return OptimizationResult(
+        best_configuration=best_configuration,
+        best_score=best_score,
+        evaluations=evaluations,
+        iterations=iteration,
+        history=history,
+        score_history=score_history,
+        metadata={
+            "initial_temperature": initial_temperature,
+            "cooling_rate": cooling_rate,
+            "final_temperature": temperature,
+        },
+    )
 
 
 def one_point_crossover(
